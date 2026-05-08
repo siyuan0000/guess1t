@@ -11,9 +11,11 @@
 
   let state = { date: todayStr(), guesses: [], result: null };
   let embData = null;   // { words, dim, vectors }
-  let wordPool = null;  // [{ word, definition }]
+  let wordPool = null;  // [{ word, definition, pos }]
+  let poolSet = null;   // Set<string> target word pool
   let targetWord = null;
   let targetDef = null;
+  let targetPos = null;
   let wordSet = null;   // Set<string> embedded vocabulary
   let wordIdx = null;   // Map<string, number> word→vector index
   let isPractice = false;
@@ -57,6 +59,7 @@
       fetch('data/embeddings_web.json').then(r => r.json()),
     ]);
     wordPool = pool;
+    poolSet = new Set(pool.map(w => w.word.toLowerCase()));
     embData = emb;
     wordSet = new Set(emb.words);
     wordIdx = new Map(emb.words.map((w, i) => [w, i]));
@@ -74,6 +77,7 @@
     renderGuesses();
     updateCounter();
     updateGiveupVisibility();
+    updateHintBar();
 
     if (state.result) {
       disableInput();
@@ -84,12 +88,21 @@
 
     $guessForm.addEventListener('submit', handleGuess);
     $giveupBtn.addEventListener('click', handleGiveup);
+
+    // Word pool modal
+    $('pool-btn').addEventListener('click', openPoolModal);
+    $('pool-close').addEventListener('click', () => $('pool-overlay').classList.add('hidden'));
+    $('pool-overlay').addEventListener('click', e => {
+      if (e.target === $('pool-overlay')) $('pool-overlay').classList.add('hidden');
+    });
+    $('pool-search').addEventListener('input', renderPoolList);
   });
 
   function pickDailyWord() {
     const idx = hashDate(todayStr()) % wordPool.length;
     targetWord = wordPool[idx].word.toLowerCase();
     targetDef = wordPool[idx].definition;
+    targetPos = wordPool[idx].pos || 'unknown';
   }
 
   // ── Guess Handler ──
@@ -188,6 +201,7 @@
     const pick = available[Math.floor(Math.random() * available.length)];
     targetWord = pick.word.toLowerCase();
     targetDef = pick.definition;
+    targetPos = pick.pos || 'unknown';
     practiceUsed.push(targetWord);
 
     // Reset game state (not persisted)
@@ -202,6 +216,7 @@
     updateCounter();
     $remaining.style.color = '';
     updateGiveupVisibility();
+    updateHintBar();
     $guessInput.focus();
   }
 
@@ -265,7 +280,9 @@
       const row = document.createElement('div');
       row.className = 'guess-row';
       const scoreText = g.score !== null ? g.score.toFixed(2) : '—';
-      row.innerHTML = `<span class="guess-word">${esc(g.word)}</span><span class="guess-score">${scoreText}</span>`;
+      const inPool = poolSet.has(g.word);
+      const badge = `<span class="pool-badge ${inPool ? 'in-pool' : 'not-pool'}">${inPool ? 'pool' : 'free'}</span>`;
+      row.innerHTML = `<span class="guess-word">${esc(g.word)}${badge}</span><span class="guess-score">${scoreText}</span>`;
       $guessList.appendChild(row);
     }
     $guessList.scrollTop = $guessList.scrollHeight;
@@ -336,4 +353,34 @@
     return Math.abs(h);
   }
   function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+  // ── Hint Bar ──
+  function updateHintBar() {
+    if (!targetPos) { $('hint-bar').classList.add('hidden'); return; }
+    $('hint-pos').textContent = targetPos;
+    $('hint-bar').classList.remove('hidden');
+  }
+
+  // ── Word Pool Modal ──
+  function openPoolModal() {
+    $('pool-overlay').classList.remove('hidden');
+    $('pool-search').value = '';
+    renderPoolList();
+    setTimeout(() => $('pool-search').focus(), 200);
+  }
+
+  function renderPoolList() {
+    const q = $('pool-search').value.trim().toLowerCase();
+    const list = $('pool-list');
+    list.innerHTML = '';
+    const filtered = q ? wordPool.filter(w => w.word.includes(q)) : wordPool;
+    for (const w of filtered) {
+      const item = document.createElement('div');
+      item.className = 'pool-item';
+      const posLabel = w.pos || '';
+      item.innerHTML = `<span class="pool-item-word">${esc(w.word)}</span><span class="pool-item-pos">${esc(posLabel)}</span><span class="pool-item-def">${esc(w.definition)}</span>`;
+      list.appendChild(item);
+    }
+    $('pool-count').textContent = `${filtered.length} / ${wordPool.length}`;
+  }
 })();

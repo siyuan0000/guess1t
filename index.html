@@ -47,6 +47,18 @@
     </div>
   </div>
 
+  <!-- Word Pool Modal -->
+  <div id="pool-overlay" class="overlay hidden">
+    <div class="modal modal-tall" id="pool-modal">
+      <div class="modal-header">
+        <h2>Word Pool <span id="pool-count" class="pool-count"></span></h2>
+        <button id="pool-close" class="btn-close" aria-label="Close">✕</button>
+      </div>
+      <input type="text" id="pool-search" class="pool-search" placeholder="Search words…" autocomplete="off">
+      <div id="pool-list" class="pool-list"></div>
+    </div>
+  </div>
+
   <!-- Main App -->
   <div id="app">
     <header>
@@ -58,6 +70,12 @@
         </div>
       </div>
     </header>
+
+    <div id="hint-bar" class="hint-bar hidden">
+      <span class="hint-label">POS:</span>
+      <span id="hint-pos" class="hint-pos"></span>
+      <button id="pool-btn" class="btn-pool">Word Pool</button>
+    </div>
 
     <main>
       <div id="loading" class="loading">

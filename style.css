@@ -380,6 +380,141 @@ main { flex: 1; display: flex; flex-direction: column; }
 }
 .guess-row.unscored .guess-score { opacity: 0.5; }
 
+/* ── Hint Bar ── */
+.hint-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+  padding: 8px 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 0.8rem;
+}
+.hint-label { color: var(--text-muted); }
+.hint-pos {
+  font-family: var(--font-mono);
+  color: var(--accent);
+  font-weight: 500;
+}
+.btn-pool {
+  margin-left: auto;
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  padding: 4px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+.btn-pool:hover { color: var(--text); border-color: var(--text-muted); }
+
+/* ── Pool Badge (in guess rows) ── */
+.pool-badge {
+  font-size: 0.6rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 2px 5px;
+  border-radius: 3px;
+  margin-left: 8px;
+  flex-shrink: 0;
+}
+.pool-badge.in-pool {
+  color: var(--accent);
+  border: 1px solid rgba(124, 108, 240, 0.3);
+}
+.pool-badge.not-pool {
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+  opacity: 0.6;
+}
+
+/* ── Word Pool Modal ── */
+.modal-tall {
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+}
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+.modal-header h2 { margin-bottom: 0; }
+.pool-count {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  font-weight: 400;
+}
+.btn-close {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 1.2rem;
+  cursor: pointer;
+  padding: 4px 8px;
+  transition: color 0.15s;
+}
+.btn-close:hover { color: var(--text); }
+
+.pool-search {
+  width: 100%;
+  padding: 10px 12px;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  outline: none;
+  margin-bottom: 12px;
+  transition: border-color 0.2s;
+}
+.pool-search:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-glow);
+}
+.pool-search::placeholder { color: var(--text-muted); }
+
+.pool-list {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.pool-item {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 4px;
+  font-size: 0.82rem;
+  transition: background 0.1s;
+}
+.pool-item:hover { background: var(--bg-input); }
+.pool-item-word {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  color: var(--text);
+  min-width: 120px;
+}
+.pool-item-pos {
+  font-size: 0.7rem;
+  color: var(--accent);
+  opacity: 0.7;
+  min-width: 32px;
+}
+.pool-item-def {
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  flex: 1;
+}
+
 /* ── Utilities ── */
 .hidden { display: none !important; }
 
@@ -389,4 +524,5 @@ main { flex: 1; display: flex; flex-direction: column; }
   header h1 { font-size: 1.4rem; }
   .guess-row { padding: 10px 12px; }
   .modal { padding: 24px 20px; }
+  .pool-item-def { display: none; }
 }
