@@ -1,3 +1,4 @@
+
 /**
  * guess1t — Semantic Word Guessing Game
  * Client-side game logic with pre-computed word embeddings.
@@ -17,19 +18,20 @@
   let wordIdx = null;   // Map<string, number> word→vector index
   let isPractice = false;
   let practiceUsed = []; // words already used in practice this session
+  let fallbackVec = null; // centroid vector for OOV word scoring
 
   // DOM refs
   const $ = id => document.getElementById(id);
-  const $loading    = $('loading');
-  const $gameArea   = $('game-area');
-  const $guessList  = $('guess-list');
-  const $guessForm  = $('guess-form');
+  const $loading = $('loading');
+  const $gameArea = $('game-area');
+  const $guessList = $('guess-list');
+  const $guessForm = $('guess-form');
   const $guessInput = $('guess-input');
-  const $submitBtn  = $('submit-btn');
-  const $errorMsg   = $('error-msg');
-  const $remaining  = $('guesses-remaining');
-  const $giveupBtn  = $('giveup-btn');
-  const $modeLabel  = $('mode-label');
+  const $submitBtn = $('submit-btn');
+  const $errorMsg = $('error-msg');
+  const $remaining = $('guesses-remaining');
+  const $giveupBtn = $('giveup-btn');
+  const $modeLabel = $('mode-label');
 
   let giveupTimer = null; // confirmation timeout
 
@@ -58,6 +60,7 @@
     embData = emb;
     wordSet = new Set(emb.words);
     wordIdx = new Map(emb.words.map((w, i) => [w, i]));
+    fallbackVec = computeCentroid();
 
     // Daily word
     pickDailyWord();
@@ -99,15 +102,18 @@
     // Duplicate check
     if (state.guesses.some(g => g.word === raw)) return showError('Already guessed.');
 
-    // Validation: accept embedded words OR any alphabetic ≥3 chars
-    const inVocab = wordSet.has(raw);
-    if (!inVocab && !isValidFallback(raw)) return showError('Not a recognized word.');
-
     // Check win (exact string match, before score)
     const isWin = raw === targetWord;
 
-    // Compute similarity (null if not in embedding set)
-    const score = inVocab ? cosineSim(raw, targetWord) : null;
+    let score = null;
+    const inVocab = wordSet.has(raw);
+
+    if (inVocab) {
+      score = cosineSim(raw, targetWord);
+    } else {
+      if (!isValidFallback(raw)) return showError('Not a valid guess.');
+      score = cosineSimWithVec(raw, targetWord);
+    }
 
     state.guesses.push({ word: raw, score });
     $guessInput.value = '';
@@ -212,10 +218,43 @@
     let dot = 0, nA = 0, nB = 0;
     for (let i = 0; i < embData.dim; i++) {
       dot += vA[i] * vB[i];
-      nA  += vA[i] * vA[i];
-      nB  += vB[i] * vB[i];
+      nA += vA[i] * vA[i];
+      nB += vB[i] * vB[i];
     }
     const s = dot / (Math.sqrt(nA) * Math.sqrt(nB));
+    return Math.round(Math.max(0, Math.min(1, s)) * 100) / 100;
+  }
+
+  // ── Centroid (average of all vectors) for OOV fallback ──
+  function computeCentroid() {
+    const dim = embData.dim;
+    const sum = new Float32Array(dim);
+    for (let i = 0; i < embData.vectors.length; i++) {
+      const v = embData.vectors[i];
+      for (let j = 0; j < dim; j++) sum[j] += v[j];
+    }
+    const n = embData.vectors.length;
+    for (let j = 0; j < dim; j++) sum[j] /= n;
+    // Normalize
+    let norm = 0;
+    for (let j = 0; j < dim; j++) norm += sum[j] * sum[j];
+    norm = Math.sqrt(norm);
+    for (let j = 0; j < dim; j++) sum[j] /= norm;
+    return sum;
+  }
+
+  // ── Cosine Similarity with fallback vector ──
+  function cosineSimWithVec(guessWord, targetWord) {
+    const iB = wordIdx.get(targetWord);
+    if (iB === undefined || !fallbackVec) return null;
+    const vB = embData.vectors[iB];
+    let dot = 0, nB = 0;
+    for (let i = 0; i < embData.dim; i++) {
+      dot += fallbackVec[i] * vB[i];
+      nB += vB[i] * vB[i];
+    }
+    // fallbackVec is already normalized, nA = 1
+    const s = dot / Math.sqrt(nB);
     return Math.round(Math.max(0, Math.min(1, s)) * 100) / 100;
   }
 
@@ -224,12 +263,9 @@
     $guessList.innerHTML = '';
     for (const g of state.guesses) {
       const row = document.createElement('div');
-      const scored = g.score !== null;
-      row.className = 'guess-row' + (scored ? '' : ' unscored');
-      const scoreText = scored ? g.score.toFixed(2) : '—';
-      let html = `<span class="guess-word">${esc(g.word)}</span><span class="guess-score">${scoreText}</span>`;
-      if (!scored) html += `<span class="guess-note">not in semantic database</span>`;
-      row.innerHTML = html;
+      row.className = 'guess-row';
+      const scoreText = g.score !== null ? g.score.toFixed(2) : '—';
+      row.innerHTML = `<span class="guess-word">${esc(g.word)}</span><span class="guess-score">${scoreText}</span>`;
       $guessList.appendChild(row);
     }
     $guessList.scrollTop = $guessList.scrollHeight;
@@ -292,7 +328,7 @@
   // ── Utilities ──
   function todayStr() {
     const d = new Date();
-    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
   }
   function hashDate(s) {
     let h = 0;

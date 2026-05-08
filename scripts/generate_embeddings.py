@@ -43,13 +43,13 @@ def main():
     print(f"Loaded {len(common)} common English words")
 
     # Combine: target words must be included
+    # Filter to reasonable words (3-15 chars)
+    common = {w for w in common if 3 <= len(w) <= 15}
     all_words = sorted(target_words | common)
-    # Cap at ~20k for reasonable file size
-    if len(all_words) > 20000:
-        # Keep all targets, sample from common
-        extras = sorted(common - target_words)
-        import random; random.seed(42)
-        extras = random.sample(extras, 20000 - len(target_words))
+    # Cap at 50k — keep all targets, prioritize shorter (more common) words
+    if len(all_words) > 50000:
+        extras = sorted(common - target_words, key=lambda w: (len(w), w))
+        extras = extras[:50000 - len(target_words)]
         all_words = sorted(target_words | set(extras))
 
     print(f"Embedding {len(all_words)} words...")
