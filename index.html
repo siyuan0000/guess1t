@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>guess1t — Semantic Word Guessing Game</title>
+  <meta name="description" content="Guess the hidden GRE word using only cosine similarity scores. A minimalist vocabulary game that tests your semantic intuition.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Onboarding Modal -->
+  <div id="onboarding-overlay" class="overlay hidden">
+    <div class="modal" id="onboarding-modal">
+      <h2>How to Play</h2>
+      <p>A hidden GRE vocabulary word has been chosen. You have <strong>10 guesses</strong> to find it.</p>
+      <p>After each guess, you'll see a <strong>similarity score</strong> from 0.00 to 1.00 — the cosine similarity between your guess and the target word in semantic space.</p>
+      <div class="example-table">
+        <div class="example-row header">
+          <span>Example</span><span>Score</span><span>Meaning</span>
+        </div>
+        <div class="example-row">
+          <span>"happy" vs "joyful"</span><span class="score-high">~0.87</span><span>Near-synonyms</span>
+        </div>
+        <div class="example-row">
+          <span>"happy" vs "furniture"</span><span class="score-low">~0.12</span><span>Unrelated words</span>
+        </div>
+      </div>
+      <p class="hint">Higher score = closer in meaning. Type the exact word to win.</p>
+      <button id="onboarding-dismiss" class="btn-primary">Got it</button>
+    </div>
+  </div>
+
+  <!-- Result Modal -->
+  <div id="result-overlay" class="overlay hidden">
+    <div class="modal" id="result-modal">
+      <div id="result-icon"></div>
+      <h2 id="result-title"></h2>
+      <p id="result-word"></p>
+      <p id="result-definition"></p>
+      <p id="result-stats"></p>
+      <button id="result-dismiss" class="btn-primary">Close</button>
+    </div>
+  </div>
+
+  <!-- Main App -->
+  <div id="app">
+    <header>
+      <h1>guess<span class="accent">1</span>t</h1>
+      <div id="guess-counter">
+        <span id="guesses-remaining">10</span><span class="label"> left</span>
+      </div>
+    </header>
+
+    <main>
+      <div id="loading" class="loading">
+        <div class="spinner"></div>
+        <p>Loading semantic space…</p>
+      </div>
+
+      <div id="game-area" class="hidden">
+        <div id="guess-list"></div>
+        <form id="guess-form">
+          <div class="input-wrapper">
+            <input type="text" id="guess-input" placeholder="Type a word…" autocomplete="off" autocapitalize="none" spellcheck="false">
+            <button type="submit" id="submit-btn" aria-label="Submit guess">→</button>
+          </div>
+          <p id="error-msg" class="error hidden"></p>
+        </form>
+      </div>
+    </main>
+  </div>
+
+  <script src="game.js"></script>
+</body>
+</html>
