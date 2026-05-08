@@ -40,7 +40,10 @@
       <p id="result-word"></p>
       <p id="result-definition"></p>
       <p id="result-stats"></p>
-      <button id="result-dismiss" class="btn-primary">Close</button>
+      <div class="modal-actions">
+        <button id="result-tryagain" class="btn-primary">Try again</button>
+        <button id="result-dismiss" class="btn-secondary">Close</button>
+      </div>
     </div>
   </div>
 
@@ -48,8 +51,11 @@
   <div id="app">
     <header>
       <h1>guess<span class="accent">1</span>t</h1>
-      <div id="guess-counter">
-        <span id="guesses-remaining">10</span><span class="label"> left</span>
+      <div id="header-right">
+        <span id="mode-label" class="mode-label hidden">practice</span>
+        <div id="guess-counter">
+          <span id="guesses-remaining">10</span><span class="label"> left</span>
+        </div>
       </div>
     </header>
 
@@ -68,6 +74,7 @@
           </div>
           <p id="error-msg" class="error hidden"></p>
         </form>
+        <button id="giveup-btn" class="btn-giveup">I give up</button>
       </div>
     </main>
   </div>
