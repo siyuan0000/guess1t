@@ -103,6 +103,7 @@
     targetWord = wordPool[idx].word.toLowerCase();
     targetDef = wordPool[idx].definition;
     targetPos = wordPool[idx].pos || 'unknown';
+    console.log(`[guess1t] TODAY'S WORD: "${targetWord}" (${targetPos}) — ${targetDef}`);
   }
 
   // ── Guess Handler ──
@@ -132,6 +133,7 @@
     $guessInput.value = '';
     renderGuesses();
     updateCounter();
+    console.log(`[guess1t] guess="${raw}" target="${targetWord}" score=${score} inPool=${poolSet.has(raw)}`);
 
     if (isWin) {
       state.result = 'win';
@@ -203,6 +205,7 @@
     targetDef = pick.definition;
     targetPos = pick.pos || 'unknown';
     practiceUsed.push(targetWord);
+    console.log(`[guess1t] PRACTICE WORD: "${targetWord}" (${targetPos}) — ${targetDef}`);
 
     // Reset game state (not persisted)
     state = { date: todayStr(), guesses: [], result: null };
@@ -373,7 +376,12 @@
     const q = $('pool-search').value.trim().toLowerCase();
     const list = $('pool-list');
     list.innerHTML = '';
-    const filtered = q ? wordPool.filter(w => w.word.includes(q)) : wordPool;
+    // Show only words with the same POS as the target word
+    let filtered = wordPool.filter(w => (w.pos || '') === targetPos);
+    // Apply text search
+    if (q) {
+      filtered = filtered.filter(w => w.word.includes(q));
+    }
     for (const w of filtered) {
       const item = document.createElement('div');
       item.className = 'pool-item';
@@ -382,5 +390,6 @@
       list.appendChild(item);
     }
     $('pool-count').textContent = `${filtered.length} / ${wordPool.length}`;
+    $('pool-pos-label').textContent = targetPos;
   }
 })();

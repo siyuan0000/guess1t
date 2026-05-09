@@ -461,6 +461,18 @@ main { flex: 1; display: flex; flex-direction: column; }
 }
 .btn-close:hover { color: var(--text); }
 
+/* ── POS Hint in Pool Modal ── */
+.pool-pos-hint {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+}
+.pool-pos-hint strong {
+  color: var(--accent);
+  font-family: var(--font-mono);
+  font-weight: 600;
+}
+
 .pool-search {
   width: 100%;
   padding: 10px 12px;
