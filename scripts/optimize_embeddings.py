@@ -23,7 +23,7 @@ def main():
     print(f"Original: {vectors.shape} ({vectors.nbytes / 1024 / 1024:.1f} MB)")
 
     # PCA to 48 dimensions (captures most variance for cosine similarity)
-    n_components = 64
+    n_components = 48
     print(f"Reducing to {n_components} dimensions via PCA...")
     pca = PCA(n_components=n_components)
     reduced = pca.fit_transform(vectors)
