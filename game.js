@@ -5,7 +5,7 @@
  * v1.1: give-up, try-again, out-of-pool guesses
  */
 (function () {
-  const MAX_GUESSES = 10;
+  const MAX_GUESSES = 5;
   const STORAGE_KEY = 'guess1t_state';
   const ONBOARDING_KEY = 'guess1t_onboarded';
 
@@ -36,6 +36,7 @@
   const $modeLabel = $('mode-label');
 
   let giveupTimer = null; // confirmation timeout
+  let poolCandidates = []; // 15 random same-POS words shown to the player
 
   // ── Init ──
   document.addEventListener('DOMContentLoaded', async () => {
@@ -95,7 +96,6 @@
     $('pool-overlay').addEventListener('click', e => {
       if (e.target === $('pool-overlay')) $('pool-overlay').classList.add('hidden');
     });
-    $('pool-search').addEventListener('input', renderPoolList);
   });
 
   function pickDailyWord() {
@@ -103,7 +103,32 @@
     targetWord = wordPool[idx].word.toLowerCase();
     targetDef = wordPool[idx].definition;
     targetPos = wordPool[idx].pos || 'unknown';
+    poolCandidates = pickPoolCandidates();
     console.log(`[guess1t] TODAY'S WORD: "${targetWord}" (${targetPos}) — ${targetDef}`);
+  }
+
+  function pickPoolCandidates() {
+    const guessed = new Set(state.guesses.map(g => g.word));
+    // Get all same-POS words except target and already-guessed
+    const samePos = wordPool.filter(w =>
+      (w.pos || '') === targetPos &&
+      w.word.toLowerCase() !== targetWord &&
+      !guessed.has(w.word.toLowerCase())
+    );
+    // Shuffle and pick up to 14
+    for (let i = samePos.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [samePos[i], samePos[j]] = [samePos[j], samePos[i]];
+    }
+    const chosen = samePos.slice(0, 14);
+    // Always include the target word
+    chosen.push(wordPool.find(w => w.word.toLowerCase() === targetWord));
+    // Shuffle again so target isn't always last
+    for (let i = chosen.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [chosen[i], chosen[j]] = [chosen[j], chosen[i]];
+    }
+    return chosen;
   }
 
   // ── Guess Handler ──
@@ -118,6 +143,11 @@
 
     // Check win (exact string match, before score)
     const isWin = raw === targetWord;
+
+    // Must be in the current pool candidates (or be the target word)
+    if (!isWin && !poolCandidates.some(c => c.word.toLowerCase() === raw)) {
+      return showError('Word not in the current pool. Choose from the displayed words.');
+    }
 
     let score = null;
     const inVocab = wordSet.has(raw);
@@ -142,6 +172,7 @@
       updateGiveupVisibility();
       return setTimeout(() => showResult('win'), 400);
     }
+
     if (state.guesses.length >= MAX_GUESSES) {
       state.result = 'lose';
       saveState();
@@ -205,6 +236,7 @@
     targetDef = pick.definition;
     targetPos = pick.pos || 'unknown';
     practiceUsed.push(targetWord);
+    poolCandidates = pickPoolCandidates();
     console.log(`[guess1t] PRACTICE WORD: "${targetWord}" (${targetPos}) — ${targetDef}`);
 
     // Reset game state (not persisted)
@@ -367,29 +399,23 @@
   // ── Word Pool Modal ──
   function openPoolModal() {
     $('pool-overlay').classList.remove('hidden');
-    $('pool-search').value = '';
     renderPoolList();
-    setTimeout(() => $('pool-search').focus(), 200);
   }
 
   function renderPoolList() {
-    const q = $('pool-search').value.trim().toLowerCase();
     const list = $('pool-list');
     list.innerHTML = '';
-    // Show only words with the same POS as the target word
-    let filtered = wordPool.filter(w => (w.pos || '') === targetPos);
-    // Apply text search
-    if (q) {
-      filtered = filtered.filter(w => w.word.includes(q));
-    }
-    for (const w of filtered) {
+    const guessed = new Set(state.guesses.map(g => g.word));
+    for (const w of poolCandidates) {
+      const alreadyGuessed = guessed.has(w.word.toLowerCase());
       const item = document.createElement('div');
       item.className = 'pool-item';
+      if (alreadyGuessed) item.classList.add('pool-item-guessed');
       const posLabel = w.pos || '';
-      item.innerHTML = `<span class="pool-item-word">${esc(w.word)}</span><span class="pool-item-pos">${esc(posLabel)}</span><span class="pool-item-def">${esc(w.definition)}</span>`;
+      item.innerHTML = `<span class="pool-item-word">${esc(w.word)}${alreadyGuessed ? ' ✗' : ''}</span><span class="pool-item-pos">${esc(posLabel)}</span><span class="pool-item-def">${esc(w.definition)}</span>`;
       list.appendChild(item);
     }
-    $('pool-count').textContent = `${filtered.length} / ${wordPool.length}`;
+    $('pool-count').textContent = `${poolCandidates.length} words (${targetPos})`;
     $('pool-pos-label').textContent = targetPos;
   }
 })();

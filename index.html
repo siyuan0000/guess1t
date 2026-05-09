@@ -14,7 +14,8 @@
   <div id="onboarding-overlay" class="overlay hidden">
     <div class="modal" id="onboarding-modal">
       <h2>How to Play</h2>
-      <p>A hidden GRE vocabulary word has been chosen. You have <strong>10 guesses</strong> to find it.</p>
+      <p>A hidden GRE vocabulary word has been chosen. You have <strong>5 guesses</strong> to find it.</p>
+      <p>Click <strong>Word Pool</strong> to see 15 candidate words — the answer is among them. After each guess, a fresh set of 15 words is shown.</p>
       <p>After each guess, you'll see a <strong>similarity score</strong> from 0.00 to 1.00 — the cosine similarity between your guess and the target word in semantic space.</p>
       <div class="example-table">
         <div class="example-row header">
@@ -54,8 +55,7 @@
         <h2>Word Pool <span id="pool-count" class="pool-count"></span></h2>
         <button id="pool-close" class="btn-close" aria-label="Close">✕</button>
       </div>
-      <div class="pool-pos-hint">Showing words with POS: <strong id="pool-pos-label"></strong></div>
-      <input type="text" id="pool-search" class="pool-search" placeholder="Search words…" autocomplete="off">
+      <div class="pool-pos-hint">Showing <strong id="pool-pos-label"></strong> words you can guess</div>
       <div id="pool-list" class="pool-list"></div>
     </div>
   </div>

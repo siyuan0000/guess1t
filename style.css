@@ -509,6 +509,8 @@ main { flex: 1; display: flex; flex-direction: column; }
   transition: background 0.1s;
 }
 .pool-item:hover { background: var(--bg-input); }
+.pool-item-guessed { opacity: 0.35; }
+.pool-item-guessed .pool-item-word { text-decoration: line-through; }
 .pool-item-word {
   font-family: var(--font-mono);
   font-weight: 500;
