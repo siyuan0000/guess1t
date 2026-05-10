@@ -144,11 +144,6 @@
     // Check win (exact string match, before score)
     const isWin = raw === targetWord;
 
-    // Must be in the current pool candidates (or be the target word)
-    if (!isWin && !poolCandidates.some(c => c.word.toLowerCase() === raw)) {
-      return showError('Word not in the current pool. Choose from the displayed words.');
-    }
-
     let score = null;
     const inVocab = wordSet.has(raw);
 
