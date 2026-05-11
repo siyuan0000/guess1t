@@ -33,6 +33,7 @@
   const $errorMsg = $('error-msg');
   const $remaining = $('guesses-remaining');
   const $giveupBtn = $('giveup-btn');
+  const $tryAgainBtn = $('tryagain-btn');
   const $modeLabel = $('mode-label');
 
   let giveupTimer = null; // confirmation timeout
@@ -53,6 +54,7 @@
       $('result-overlay').classList.add('hidden');
     });
     $('result-tryagain').addEventListener('click', startPractice);
+    $tryAgainBtn.addEventListener('click', startPractice);
 
     // Load data in parallel
     const [pool, emb] = await Promise.all([
@@ -205,6 +207,7 @@
 
   function updateGiveupVisibility() {
     $giveupBtn.classList.toggle('hidden', !!state.result);
+    $tryAgainBtn.classList.toggle('hidden', !state.result);
     // Reset confirmation state
     $giveupBtn.textContent = 'I give up';
     $giveupBtn.classList.remove('confirming');
