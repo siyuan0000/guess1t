@@ -13,6 +13,7 @@
   let embData = null;   // { words, dim, vectors }
   let wordPool = null;  // [{ word, definition, pos }]
   let poolSet = null;   // Set<string> target word pool
+  let poolInfo = null;  // Map<string, { definition: string, pos: string }>
   let targetWord = null;
   let targetDef = null;
   let targetPos = null;
@@ -35,6 +36,7 @@
   const $giveupBtn = $('giveup-btn');
   const $tryAgainBtn = $('tryagain-btn');
   const $modeLabel = $('mode-label');
+  let $guessTooltip = null;
 
   let giveupTimer = null; // confirmation timeout
   let poolCandidates = []; // 15 random same-POS words shown to the player
@@ -63,6 +65,7 @@
     ]);
     wordPool = pool;
     poolSet = new Set(pool.map(w => w.word.toLowerCase()));
+    poolInfo = new Map(pool.map(w => [w.word.toLowerCase(), { definition: w.definition, pos: w.pos || '' }]));
     embData = emb;
     wordSet = new Set(emb.words);
     wordIdx = new Map(emb.words.map((w, i) => [w, i]));
@@ -91,6 +94,7 @@
 
     $guessForm.addEventListener('submit', handleGuess);
     $giveupBtn.addEventListener('click', handleGiveup);
+    $guessList.addEventListener('scroll', hideGuessTooltip);
 
     // Word pool modal
     $('pool-btn').addEventListener('click', openPoolModal);
@@ -98,6 +102,11 @@
     $('pool-overlay').addEventListener('click', e => {
       if (e.target === $('pool-overlay')) $('pool-overlay').classList.add('hidden');
     });
+
+    $guessTooltip = document.createElement('div');
+    $guessTooltip.id = 'guess-tooltip';
+    $guessTooltip.className = 'hidden';
+    document.body.appendChild($guessTooltip);
   });
 
   function pickDailyWord() {
@@ -314,11 +323,60 @@
       row.className = 'guess-row';
       const scoreText = g.score !== null ? g.score.toFixed(2) : '—';
       const inPool = poolSet.has(g.word);
-      const badge = `<span class="pool-badge ${inPool ? 'in-pool' : 'not-pool'}">${inPool ? 'pool' : 'free'}</span>`;
-      row.innerHTML = `<span class="guess-word">${esc(g.word)}${badge}</span><span class="guess-score">${scoreText}</span>`;
+      const info = poolInfo ? poolInfo.get(g.word) : null;
+
+      const wordSpan = document.createElement('span');
+      wordSpan.className = 'guess-word';
+      wordSpan.textContent = g.word;
+
+      if (info && info.definition) {
+        wordSpan.classList.add('has-def');
+        wordSpan.dataset.def = info.definition;
+        wordSpan.tabIndex = 0;
+        wordSpan.addEventListener('mouseenter', () => showGuessTooltip(wordSpan.dataset.def, wordSpan));
+        wordSpan.addEventListener('mouseleave', hideGuessTooltip);
+        wordSpan.addEventListener('focus', () => showGuessTooltip(wordSpan.dataset.def, wordSpan));
+        wordSpan.addEventListener('blur', hideGuessTooltip);
+      }
+
+      const badge = document.createElement('span');
+      badge.className = `pool-badge ${inPool ? 'in-pool' : 'not-pool'}`;
+      badge.textContent = inPool ? 'pool' : 'free';
+
+      const scoreSpan = document.createElement('span');
+      scoreSpan.className = 'guess-score';
+      scoreSpan.textContent = scoreText;
+
+      wordSpan.appendChild(badge);
+      row.appendChild(wordSpan);
+      row.appendChild(scoreSpan);
       $guessList.appendChild(row);
     }
     $guessList.scrollTop = $guessList.scrollHeight;
+  }
+
+  function showGuessTooltip(text, anchorEl) {
+    if (!$guessTooltip || !text || !anchorEl) return;
+    $guessTooltip.textContent = text;
+    $guessTooltip.classList.remove('hidden');
+
+    const rect = anchorEl.getBoundingClientRect();
+    const margin = 10;
+    const maxWidth = 340;
+
+    const left = Math.max(
+      margin,
+      Math.min(rect.left, window.innerWidth - maxWidth - margin),
+    );
+    const top = Math.min(rect.bottom + 10, window.innerHeight - margin);
+
+    $guessTooltip.style.left = `${left}px`;
+    $guessTooltip.style.top = `${top}px`;
+  }
+
+  function hideGuessTooltip() {
+    if (!$guessTooltip) return;
+    $guessTooltip.classList.add('hidden');
   }
 
   function updateCounter() {
