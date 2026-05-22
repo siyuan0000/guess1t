@@ -2,7 +2,7 @@
 /**
  * guess1t — Semantic Word Guessing Game
  * Client-side game logic with pre-computed word embeddings.
- * v1.1: give-up, try-again, out-of-pool guesses
+ * v1.2: POS fix, daily word PRNG, similarity color gradient system
  */
 (function () {
   const MAX_GUESSES = 5;
@@ -267,6 +267,85 @@
     return word.length >= 3 && /^[a-z]+$/.test(word);
   }
 
+  // ── Similarity Color System ──
+  /**
+   * Smoothstep activation: spreads mid-range scores apart for
+   * better perceptual differentiation in the color mapping.
+   */
+  function activateScore(raw) {
+    const x = Math.max(0, Math.min(1, raw));
+    return x * x * (3 - 2 * x);
+  }
+
+  /**
+   * Map a raw similarity score (0–1) to an HSL color string.
+   * Uses the activated (smoothstepped) score for color selection.
+   *
+   * Gradient stops:
+   *   0.00 → slate grey   (220, 10%, 45%)
+   *   0.30 → cool blue    (210, 60%, 55%)
+   *   0.50 → cyan         (180, 70%, 50%)
+   *   0.70 → warm amber   (40,  85%, 55%)
+   *   0.85 → hot orange   (25,  90%, 55%)
+   *   0.95 → bright green (145, 80%, 55%)
+   *   1.00 → gold         (45,  95%, 55%)
+   */
+  function getScoreColor(rawScore) {
+    if (rawScore === null) return 'var(--text-muted)';
+    const t = activateScore(rawScore);
+    // Multi-stop gradient via linear interpolation
+    const stops = [
+      { at: 0.00, h: 220, s: 10, l: 50 },
+      { at: 0.25, h: 215, s: 50, l: 58 },
+      { at: 0.40, h: 195, s: 65, l: 55 },
+      { at: 0.55, h: 50,  s: 75, l: 58 },
+      { at: 0.70, h: 35,  s: 85, l: 55 },
+      { at: 0.85, h: 15,  s: 90, l: 55 },
+      { at: 0.95, h: 145, s: 75, l: 55 },
+      { at: 1.00, h: 48,  s: 95, l: 55 },
+    ];
+    // Find the two bounding stops
+    let lo = stops[0], hi = stops[stops.length - 1];
+    for (let i = 0; i < stops.length - 1; i++) {
+      if (t >= stops[i].at && t <= stops[i + 1].at) {
+        lo = stops[i];
+        hi = stops[i + 1];
+        break;
+      }
+    }
+    const range = hi.at - lo.at || 1;
+    const p = (t - lo.at) / range;
+    const h = Math.round(lo.h + (hi.h - lo.h) * p);
+    const s = Math.round(lo.s + (hi.s - lo.s) * p);
+    const l = Math.round(lo.l + (hi.l - lo.l) * p);
+    return `hsl(${h}, ${s}%, ${l}%)`;
+  }
+
+  /**
+   * Returns a subtle background tint for the guess row.
+   */
+  function getScoreGlow(rawScore) {
+    if (rawScore === null) return 'transparent';
+    const t = activateScore(rawScore);
+    const color = getScoreColor(rawScore);
+    // Extract HSL and return with very low alpha
+    const alpha = 0.06 + t * 0.10; // 6% to 16%
+    return color.replace('hsl(', 'hsla(').replace(')', `, ${alpha.toFixed(2)})`);
+  }
+
+  /**
+   * Returns the CSS class tier for a score, used for progress bar color.
+   */
+  function getScoreTier(rawScore) {
+    if (rawScore === null) return 'tier-none';
+    if (rawScore >= 1.0) return 'tier-perfect';
+    if (rawScore >= 0.85) return 'tier-hot';
+    if (rawScore >= 0.70) return 'tier-warm';
+    if (rawScore >= 0.50) return 'tier-mid';
+    if (rawScore >= 0.30) return 'tier-cool';
+    return 'tier-cold';
+  }
+
   // ── Cosine Similarity ──
   function cosineSim(a, b) {
     const iA = wordIdx.get(a), iB = wordIdx.get(b);
@@ -325,6 +404,16 @@
       const inPool = poolSet.has(g.word);
       const info = poolInfo ? poolInfo.get(g.word) : null;
 
+      // ── Dynamic color system ──
+      const tier = getScoreTier(g.score);
+      row.classList.add(tier);
+      // Subtle background tint based on score
+      row.style.background = getScoreGlow(g.score);
+      // Border-left accent
+      if (g.score !== null && g.score >= 0.30) {
+        row.style.borderLeft = `3px solid ${getScoreColor(g.score)}`;
+      }
+
       const wordSpan = document.createElement('span');
       wordSpan.className = 'guess-word';
       wordSpan.textContent = g.word;
@@ -346,10 +435,29 @@
       const scoreSpan = document.createElement('span');
       scoreSpan.className = 'guess-score';
       scoreSpan.textContent = scoreText;
+      // Color the score text dynamically
+      if (g.score !== null) {
+        scoreSpan.style.color = getScoreColor(g.score);
+      }
+
+      // ── Progress bar ──
+      const progressWrap = document.createElement('div');
+      progressWrap.className = 'score-progress-wrap';
+      const progressBar = document.createElement('div');
+      progressBar.className = 'score-progress-bar';
+      const pct = g.score !== null ? Math.max(0, Math.min(100, g.score * 100)) : 0;
+      progressBar.style.width = `${pct}%`;
+      progressBar.style.background = getScoreColor(g.score);
+      // Add glow for high scores
+      if (g.score !== null && g.score >= 0.70) {
+        progressBar.style.boxShadow = `0 0 8px ${getScoreColor(g.score)}`;
+      }
+      progressWrap.appendChild(progressBar);
 
       wordSpan.appendChild(badge);
       row.appendChild(wordSpan);
       row.appendChild(scoreSpan);
+      row.appendChild(progressWrap);
       $guessList.appendChild(row);
     }
     $guessList.scrollTop = $guessList.scrollHeight;
