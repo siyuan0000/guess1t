@@ -55,9 +55,9 @@
     "pos": "verb"
   },
   {
-    "word": "aesthetic",
+    "word": "adjective",
     "definition": "concerned with beauty or appreciation of beauty",
-    "pos": "noun"
+    "pos": "adj"
   },
   {
     "word": "affable",
@@ -702,7 +702,7 @@
   {
     "word": "expedient",
     "definition": "convenient and practical but possibly improper",
-    "pos": "noun"
+    "pos": "adj"
   },
   {
     "word": "extant",
@@ -1192,7 +1192,7 @@
   {
     "word": "partisan",
     "definition": "a strong supporter of a party or cause",
-    "pos": "adj"
+    "pos": "noun"
   },
   {
     "word": "pedantic",
