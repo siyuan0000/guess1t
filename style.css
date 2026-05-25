@@ -97,6 +97,69 @@ main { flex: 1; display: flex; flex-direction: column; }
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   animation: slideIn 0.25s ease-out;
+  transition: background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+/* ── Score Tier Styles ── */
+.guess-row.tier-cold {
+  border-color: hsl(220, 15%, 25%);
+}
+.guess-row.tier-cool {
+  border-color: hsl(210, 40%, 35%);
+}
+.guess-row.tier-mid {
+  border-color: hsl(50, 50%, 40%);
+}
+.guess-row.tier-warm {
+  border-color: hsl(35, 60%, 45%);
+  box-shadow: 0 0 12px hsla(35, 60%, 45%, 0.08);
+}
+.guess-row.tier-hot {
+  border-color: hsl(15, 70%, 48%);
+  box-shadow: 0 0 16px hsla(15, 70%, 48%, 0.12);
+}
+.guess-row.tier-perfect {
+  border-color: hsl(48, 95%, 55%);
+  box-shadow: 0 0 24px hsla(48, 95%, 55%, 0.2), 0 0 48px hsla(48, 95%, 55%, 0.08);
+  animation: slideIn 0.25s ease-out, goldShimmer 2s ease-in-out infinite alternate;
+}
+
+/* ── Gold Shimmer Animation ── */
+@keyframes goldShimmer {
+  0% {
+    box-shadow: 0 0 20px hsla(48, 95%, 55%, 0.15), 0 0 40px hsla(48, 95%, 55%, 0.06);
+    border-color: hsl(48, 90%, 50%);
+  }
+  100% {
+    box-shadow: 0 0 30px hsla(48, 95%, 60%, 0.25), 0 0 60px hsla(48, 95%, 55%, 0.12);
+    border-color: hsl(42, 95%, 60%);
+  }
+}
+
+/* ── Progress Bar ── */
+.score-progress-wrap {
+  width: 100%;
+  height: 3px;
+  background: hsla(220, 15%, 25%, 0.5);
+  border-radius: 2px;
+  margin-top: 8px;
+  overflow: hidden;
+}
+.score-progress-bar {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+  min-width: 0;
+}
+/* Animate the bar in on first render */
+.guess-row .score-progress-bar {
+  animation: barGrow 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+@keyframes barGrow {
+  from { transform: scaleX(0); transform-origin: left; }
+  to   { transform: scaleX(1); transform-origin: left; }
 }
 
 .guess-word {
@@ -104,12 +167,38 @@ main { flex: 1; display: flex; flex-direction: column; }
   font-size: 0.95rem;
   font-weight: 400;
 }
+.guess-word.has-def { cursor: help; }
 
 .guess-score {
   font-family: var(--font-mono);
   font-size: 1rem;
   font-weight: 600;
   color: var(--text-muted);
+  transition: color 0.3s ease;
+  text-shadow: 0 0 0 transparent;
+}
+/* Glow effect on high scores */
+.tier-warm .guess-score,
+.tier-hot .guess-score {
+  text-shadow: 0 0 8px currentColor;
+}
+.tier-perfect .guess-score {
+  text-shadow: 0 0 12px hsla(48, 95%, 55%, 0.6);
+}
+
+#guess-tooltip {
+  position: fixed;
+  z-index: 1000;
+  max-width: 340px;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  color: var(--text);
+  font-size: 0.82rem;
+  line-height: 1.4;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
+  pointer-events: none;
 }
 
 @keyframes slideIn {
